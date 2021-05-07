@@ -44,35 +44,40 @@ where
     ) -> Result<Self, SynthesisError> {
         let ns = cs.into();
         let cs = ns.cs();
-        f().and_then(|val| {
-            let leaf_sibling = LeafH::OutputVar::new_variable(
-                ark_relations::ns!(cs, "leaf_sibling"),
-                || Ok(val.borrow().leaf_sibling_hash.clone()),
-                mode,
-            )?;
-            let leaf_position_bit = Boolean::new_variable(
-                ark_relations::ns!(cs, "leaf_position_bit"),
-                || Ok(val.borrow().leaf_index & 1 == 1),
-                mode,
-            )?;
-            let pos_list: Vec<_> = val.borrow().position_list().collect();
-            let path = Vec::new_variable(
-                ark_relations::ns!(cs, "path_bits"),
-                || Ok(&pos_list[..(pos_list.len() - 1)]),
-                mode,
-            )?;
 
-            let auth_path = Vec::new_variable(
-                ark_relations::ns!(cs, "auth_path_nodes"),
-                || Ok(&val.borrow().auth_path[..]),
-                mode,
-            )?;
-            Ok(PathVar {
-                path,
-                auth_path,
-                leaf_sibling,
-                leaf_is_right_child: leaf_position_bit,
-            })
+        let path = f();
+        let path_ref: Result<&Path<P>, _> = path.as_ref().map(|p| p.borrow()).map_err(|e| *e);
+
+        let leaf_sibling = LeafH::OutputVar::new_variable(
+            ark_relations::ns!(cs, "leaf_sibling"),
+            || path_ref.map(|p| p.leaf_sibling_hash.clone()),
+            mode,
+        )?;
+        let leaf_position_bit = Boolean::new_variable(
+            ark_relations::ns!(cs, "leaf_position_bit"),
+            || path_ref.map(|p| p.leaf_index & 1 == 1),
+            mode,
+        )?;
+
+        let pos_list: Result<Vec<_>, _> = path_ref.map(|v| v.position_list().collect());
+        let pos_list_ref = pos_list.as_ref().map_err(|e| *e);
+        let path = Vec::new_variable(
+            ark_relations::ns!(cs, "path_bits"),
+            || pos_list_ref.map(|pl| &pl[..(pl.len() - 1)]),
+            mode,
+        )?;
+
+        let auth_path = Vec::new_variable(
+            ark_relations::ns!(cs, "auth_path_nodes"),
+            || path_ref.map(|p| &p.auth_path[..]),
+            mode,
+        )?;
+
+        Ok(PathVar {
+            path,
+            auth_path,
+            leaf_sibling,
+            leaf_is_right_child: leaf_position_bit,
         })
     }
 }
