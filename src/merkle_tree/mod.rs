@@ -31,11 +31,11 @@ pub type LeafParam<P> = <<P as Config>::LeafHash as CRH>::Parameters;
 /// ```
 ///  Suppose we want to prove I, then `leaf_sibling_hash` is J, `auth_path` is `[C,D]`
 pub struct Path<P: Config> {
-    pub(crate) leaf_sibling_hash: LeafDigest<P>,
+    pub leaf_sibling_hash: LeafDigest<P>,
     /// The sibling of path node ordered from higher layer to lower layer (does not include root node).
-    pub(crate) auth_path: Vec<TwoToOneDigest<P>>,
+    pub auth_path: Vec<TwoToOneDigest<P>>,
     /// stores the leaf index of the node
-    pub(crate) leaf_index: usize,
+    pub leaf_index: usize,
 }
 
 impl<P: Config> Path<P> {
