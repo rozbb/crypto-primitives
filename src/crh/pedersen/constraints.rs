@@ -158,7 +158,7 @@ mod test {
     }
 
     #[test]
-    fn test_native_equality() {
+    fn test_naive_equality() {
         let rng = &mut test_rng();
         let cs = ConstraintSystem::<Fr>::new_ref();
 
